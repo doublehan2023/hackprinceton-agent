@@ -1,45 +1,32 @@
-import fitz  # PyMuPDF
-import docx
+from pathlib import Path
 
 
-# -----------------------------
-# PDF TEXT EXTRACTION
-# -----------------------------
-def extract_pdf_text(file_path: str) -> str:
-    doc = fitz.open(file_path)
-    text = ""
+def _read_pdf(file_path: str) -> str:
+    try:
+        import fitz
+    except ImportError as exc:
+        raise RuntimeError("PyMuPDF is required to parse PDF files.") from exc
 
-    for page in doc:
-        text += page.get_text()
-
-    return text.strip()
+    with fitz.open(file_path) as document:
+        return "\n".join(page.get_text() for page in document).strip()
 
 
-# -----------------------------
-# DOCX TEXT EXTRACTION
-# -----------------------------
-def extract_docx_text(file_path: str) -> str:
-    doc = docx.Document(file_path)
-    text = "\n".join([para.text for para in doc.paragraphs])
+def _read_docx(file_path: str) -> str:
+    try:
+        import docx
+    except ImportError as exc:
+        raise RuntimeError("python-docx is required to parse DOCX files.") from exc
 
-    return text.strip()
+    document = docx.Document(file_path)
+    return "\n".join(paragraph.text for paragraph in document.paragraphs).strip()
 
 
-# -----------------------------
-# MAIN UNIVERSAL PARSER
-# -----------------------------
-def extract_text(file_path: str, filename: str) -> str:
-    filename = filename.lower()
-
-    if filename.endswith(".pdf"):
-        return extract_pdf_text(file_path)
-
-    elif filename.endswith(".docx"):
-        return extract_docx_text(file_path)
-
-    elif filename.endswith(".txt"):
-        with open(file_path, "r", encoding="utf-8") as f:
-            return f.read()
-
-    else:
-        raise ValueError("Unsupported file format")
+def extract_text(file_path: str, filename: str | None = None) -> str:
+    suffix = (filename or Path(file_path).name).lower()
+    if suffix.endswith(".pdf"):
+        return _read_pdf(file_path)
+    if suffix.endswith(".docx"):
+        return _read_docx(file_path)
+    if suffix.endswith(".txt"):
+        return Path(file_path).read_text(encoding="utf-8")
+    raise ValueError("Unsupported file format. Expected PDF, DOCX, or TXT.")
