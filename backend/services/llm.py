@@ -23,22 +23,57 @@ from flask.cli import load_dotenv
 import requests
 import json
 import os
+from pathlib import Path
 
 load_dotenv() 
 GEMINI_MODEL = "gemini-2.0-flash"
 K2_API_BASE = "https://api.k2.ai/v1"   # update to real K2 endpoint when confirmed
 
-# Load from env (never hardcode keys)
-GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
-K2_KEY = os.getenv("K2_API_KEY", "")
+ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+
+def load_local_env() -> None:
+    """
+    Loads simple KEY=VALUE pairs from the repo-level .env file.
+    Existing environment variables win so shell exports still override local defaults.
+    """
+    if not ENV_FILE.exists():
+        return
+
+    for raw_line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+def get_gemini_key(override: str = "") -> str:
+    load_local_env()
+    return override or os.getenv("GEMINI_API_KEY", "")
+
+
+def get_k2_key() -> str:
+    load_local_env()
+    return os.getenv("K2_API_KEY", "")
 
 
 # ══════════════════════════════════════════════════════════════
 # GEMINI — CORE CALL
 # USE FOR: classification, summarization, chat, fast analysis
 # ══════════════════════════════════════════════════════════════
+<<<<<<< HEAD
 def call_gemini(GEMINI_API_KEY: str, prompt: str, temperature: float = 0.2) -> str | None:
     key = GEMINI_API_KEY or GEMINI_KEY
+=======
+def call_gemini(api_key: str, prompt: str, temperature: float = 0.2) -> str | None:
+    key = get_gemini_key(api_key)
+>>>>>>> d0334c75795e5796eb5bb3b9228f410d81195343
     if not key:
         print("⚠️  No Gemini API key provided")
         return None
@@ -70,12 +105,13 @@ def call_gemini(GEMINI_API_KEY: str, prompt: str, temperature: float = 0.2) -> s
 # deep legal reasoning beyond Gemini's capability
 # ══════════════════════════════════════════════════════════════
 def call_k2(prompt: str, system_prompt: str = None) -> str | None:
-    if not K2_KEY:
+    k2_key = get_k2_key()
+    if not k2_key:
         print("⚠️  K2_API_KEY not set — falling back to Gemini")
         return None
 
     headers = {
-        "Authorization": f"Bearer {K2_KEY}",
+        "Authorization": f"Bearer {k2_key}",
         "Content-Type": "application/json"
     }
 
@@ -325,5 +361,10 @@ FORMAT:
 - Risk or ACTA deviation explanation (if applicable)
 - Negotiation suggestion (if applicable)
 """
+<<<<<<< HEAD
     result = call_gemini(GEMINI_API_KEY, prompt, temperature=0.3)
     return result or "Unable to generate a response. Please try again."
+=======
+    result = call_gemini(api_key, prompt, temperature=0.3)
+    return result or "Unable to generate a response. Please try again."
+>>>>>>> d0334c75795e5796eb5bb3b9228f410d81195343
