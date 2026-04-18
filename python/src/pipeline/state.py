@@ -29,6 +29,8 @@ class Clause(BaseModel):
     clause_type: ClauseType
     text: str
     source_order: int
+    section_title: str | None = None
+    section_order: int | None = None
     evidence: list[str] = Field(default_factory=list)
     classification_confidence: float = Field(ge=0.0, le=1.0)
 
@@ -60,10 +62,18 @@ class Suggestion(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
+class Section(BaseModel):
+    title: str | None = None
+    body: str
+    source_order: int
+    heading_level: int | None = Field(default=None, ge=1)
+
+
 class ContractReviewState(BaseModel):
     review_id: str
     filename: str = "inline.txt"
     raw_text: str
+    sections: list[Section] = Field(default_factory=list)
     clauses: list[Clause] = Field(default_factory=list)
     risk_findings: list[RiskFinding] = Field(default_factory=list)
     compliance_findings: list[ComplianceFinding] = Field(default_factory=list)

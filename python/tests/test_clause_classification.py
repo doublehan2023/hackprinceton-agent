@@ -1,4 +1,5 @@
 from src.nlp.legal_nlp import classify_clause, extract_clauses
+from src.parsers.document_parser import parse_text
 from src.pipeline.state import ClauseType
 
 
@@ -55,3 +56,20 @@ def test_classification_prefers_higher_keyword_frequency() -> None:
 
     assert clause.clause_type is ClauseType.PUBLICATION_RIGHTS
     assert clause.classification_confidence > 0.45
+
+
+def test_extract_clauses_preserves_section_context_and_order() -> None:
+    parsed = parse_text(
+        "1. Payment Terms\n"
+        "Invoices are due within thirty days.\n\n"
+        "2. Termination\n"
+        "Either party may terminate this agreement with thirty days notice."
+    )
+
+    clauses = extract_clauses(parsed.raw_text, sections=parsed.sections, max_clauses=5)
+
+    assert [clause.section_title for clause in clauses] == ["1. Payment Terms", "2. Termination"]
+    assert [clause.section_order for clause in clauses] == [1, 2]
+    assert [clause.source_order for clause in clauses] == [1, 2]
+    assert clauses[0].clause_type is ClauseType.PAYMENT_TERMS
+    assert clauses[1].clause_type is ClauseType.TERMINATION

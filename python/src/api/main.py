@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.config import get_settings
-from src.parsers.document_parser import extract_text
+from src.parsers.document_parser import parse_document, parse_text
 from src.pipeline.graph import create_review_pipeline
 from src.pipeline.state import ContractReviewState, RiskLevel
 
@@ -74,10 +74,12 @@ async def versioned_health() -> dict[str, str]:
 
 
 def _build_state(payload: AnalyzeRequest) -> ContractReviewState:
+    parsed = parse_text(payload.text)
     return ContractReviewState(
         review_id=str(uuid.uuid4()),
         filename=payload.filename,
-        raw_text=payload.text,
+        raw_text=parsed.raw_text,
+        sections=parsed.sections,
     )
 
 
@@ -130,10 +132,11 @@ async def analyze_contract(
         file_path = settings.upload_dir / Path(filename).name
         file_path.write_bytes(await file.read())
         try:
-            raw_text = extract_text(str(file_path), filename).strip()
+            raw_text = parse_document(str(file_path), filename).raw_text
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"File parsing failed: {exc}") from exc
 
+    raw_text = raw_text.strip()
     if not raw_text:
         raise HTTPException(status_code=400, detail="The uploaded contract did not contain readable text.")
 
