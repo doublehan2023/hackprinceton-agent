@@ -158,6 +158,7 @@ class RiskIdentificationAgent:
             return {
                 "risk_findings": [],
                 "overall_risk_level": RiskLevel.GREEN,
+                "risk_score": 0,
                 "risk_summary": summary,
                 "summary": summary,
                 "needs_human_review": False,
@@ -169,10 +170,12 @@ class RiskIdentificationAgent:
             self._ensure_llm()
         except Exception as exc:
             overall = self._calculate_overall_risk(rule_findings)
+            risk_score = self._calculate_risk_score(rule_findings)
             summary = self._generate_k2_required_summary(rule_findings, overall)
             return {
                 "risk_findings": rule_findings,
                 "overall_risk_level": overall,
+                "risk_score": risk_score,
                 "risk_summary": summary,
                 "summary": summary,
                 "needs_human_review": True,
@@ -183,10 +186,12 @@ class RiskIdentificationAgent:
             llm_findings = self._llm_analysis(state.clauses)
             merged = self._merge_findings(state.clauses, rule_findings, llm_findings)
             overall = self._calculate_overall_risk(merged)
+            risk_score = self._calculate_risk_score(merged)
             summary = self._generate_summary(merged, overall)
             return {
                 "risk_findings": merged,
                 "overall_risk_level": overall,
+                "risk_score": risk_score,
                 "risk_summary": summary,
                 "summary": summary,
                 "needs_human_review": any(f.needs_human_review for f in merged),
@@ -194,10 +199,12 @@ class RiskIdentificationAgent:
         except Exception as exc:  # pragma: no cover - exercised by integration behavior
             logger.warning("%s risk analysis failed; provisional ACTA rules only: %s", self.analysis_model.upper(), exc)
             overall = self._calculate_overall_risk(rule_findings)
+            risk_score = self._calculate_risk_score(rule_findings)
             summary = self._generate_k2_required_summary(rule_findings, overall)
             return {
                 "risk_findings": rule_findings,
                 "overall_risk_level": overall,
+                "risk_score": risk_score,
                 "risk_summary": summary,
                 "summary": summary,
                 "needs_human_review": True,
@@ -469,6 +476,37 @@ class RiskIdentificationAgent:
             f"{red} critical, {yellow} moderate, and {green} aligned clauses. "
             f"Overall ACTA deviation risk is {overall.value}."
         )
+
+    def _calculate_risk_score(self, findings: list[RiskFinding]) -> int:
+        if not findings:
+            return 0
+
+        severity_weights = {
+            RiskLevel.RED: 1.0,
+            RiskLevel.YELLOW: 0.58,
+            RiskLevel.GREEN: 0.12,
+        }
+        weighted_total = sum(
+            severity_weights[finding.risk_level] * max(finding.confidence, 0.35)
+            for finding in findings
+        )
+        average_risk = weighted_total / len(findings)
+
+        score = round(average_risk * 100)
+        red_count = sum(1 for finding in findings if finding.risk_level is RiskLevel.RED)
+        yellow_count = sum(1 for finding in findings if finding.risk_level is RiskLevel.YELLOW)
+
+        # Material red/yellow counts should move the score meaningfully even when
+        # the underlying confidence values are close together.
+        score += min(red_count * 8, 18)
+        score += min(yellow_count * 3, 9)
+
+        if red_count > 0:
+            score = max(score, 55)
+        elif yellow_count > 0:
+            score = max(score, 28)
+
+        return min(score, 100)
 
     def _generate_k2_required_summary(self, findings: list[RiskFinding], overall: RiskLevel) -> str:
         red = sum(1 for finding in findings if finding.risk_level is RiskLevel.RED)

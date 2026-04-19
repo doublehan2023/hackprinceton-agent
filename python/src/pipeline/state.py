@@ -62,9 +62,13 @@ class ComplianceFinding(BaseModel):
 class Suggestion(BaseModel):
     clause_id: str
     clause_type: ClauseType
-    proposed_text: str
-    rationale: str
-    confidence: float = Field(ge=0.0, le=1.0)
+    proposed_text: str = ""
+    rationale: str = ""
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    original_text: str = ""
+    suggested_text: str = ""
+    reason: str = ""
+    priority: str = "medium"
 
 
 class Section(BaseModel):
@@ -88,5 +92,7 @@ class ContractReviewState(BaseModel):
     needs_human_review: bool = False
     summary: str = ""
     overall_risk_level: RiskLevel | None = None
+    risk_score: int = 0
     risk_summary: str = ""
+    version_diff: str = ""
     errors: list[str] = Field(default_factory=list)

@@ -5,7 +5,7 @@ from src.agents.compliance_check import ComplianceCheckAgent
 from src.agents.risk_identification import RiskIdentificationAgent
 from src.agents.suggestion import SuggestionAgent
 from src.parsers.document_parser import parse_text
-from src.pipeline.state import ClauseType, ContractReviewState
+from src.pipeline.state import Clause, ClauseType, ComplianceFinding, ContractReviewState, RiskFinding, RiskLevel
 
 
 def test_review_flow_handles_inline_text_with_headings() -> None:
@@ -113,3 +113,101 @@ def test_clause_extraction_agent_strips_k2_think_blocks() -> None:
     assert len(result["clauses"]) == 1
     assert result["extraction_model"] == "k2"
     assert result["clauses"][0].clause_type is ClauseType.CONFIDENTIALITY
+
+
+def test_suggestion_agent_parses_llm_redlines() -> None:
+    state = ContractReviewState(
+        review_id="review-suggestions",
+        raw_text="Test contract",
+        clauses=[
+            Clause(
+                id="clause-1",
+                clause_type=ClauseType.CONFIDENTIALITY,
+                text="Recipient may use confidential information as it deems appropriate.",
+                source_order=1,
+                classification_confidence=0.91,
+            )
+        ],
+        risk_findings=[
+            RiskFinding(
+                clause_id="clause-1",
+                clause_type=ClauseType.CONFIDENTIALITY,
+                clause_text="Recipient may use confidential information as it deems appropriate.",
+                risk_level=RiskLevel.YELLOW,
+                deviation_summary="The confidentiality protection may be weaker than the ACTA baseline.",
+                suggested_action="Use clearer confidentiality obligations and standard ACTA exceptions.",
+                confidence=0.83,
+                rationale="The clause allows discretionary use of confidential information.",
+            )
+        ],
+    )
+
+    class FakeResponse:
+        content = """
+        {
+          "suggestions": [
+            {
+              "clause_id": "clause-1",
+              "original_text": "Recipient may use confidential information as it deems appropriate.",
+              "suggested_text": "Recipient shall protect confidential information using at least the same degree of care it uses for its own confidential information and may use it only for study-related purposes.",
+              "reason": "Tightens use restrictions and restores a more standard confidentiality protection.",
+              "priority": "medium"
+            }
+          ]
+        }
+        """
+
+    class FakeLLM:
+        def invoke(self, messages):
+            assert len(messages) == 2
+            return FakeResponse()
+
+    agent = SuggestionAgent()
+    agent.llm = FakeLLM()
+
+    result = agent(state)
+
+    assert len(result["suggestions"]) == 1
+    assert result["suggestions"][0].suggested_text.startswith("Recipient shall protect confidential information")
+    assert result["suggestions"][0].priority == "medium"
+    assert "clause-1 (original)" in result["version_diff"]
+
+
+def test_suggestion_agent_falls_back_and_adds_missing_clause_suggestions() -> None:
+    state = ContractReviewState(
+        review_id="review-fallback",
+        raw_text="Test contract",
+        risk_findings=[
+            RiskFinding(
+                clause_id="clause-2",
+                clause_type=ClauseType.PAYMENT_TERMS,
+                clause_text="Invoices are due within ninety days.",
+                risk_level=RiskLevel.YELLOW,
+                deviation_summary="The payment timing is slower than ACTA's net-30 style baseline.",
+                suggested_action="Restore net-30 timing and tie payment to itemized invoicing.",
+                confidence=0.76,
+                rationale="Net 90 timing creates cash-flow drag.",
+            )
+        ],
+        compliance_findings=[
+            ComplianceFinding(
+                clause_type="Termination",
+                status="missing",
+                detail="Missing expected CTA section: Termination.",
+            )
+        ],
+    )
+
+    class FailingLLM:
+        def invoke(self, messages):
+            raise RuntimeError("LLM unavailable")
+
+    agent = SuggestionAgent()
+    agent.llm = FailingLLM()
+
+    result = agent(state)
+
+    assert len(result["suggestions"]) == 2
+    assert result["suggestions"][0].priority == "high"
+    assert any(s.clause_id == "missing:termination" for s in result["suggestions"])
+    assert "+ [Missing Clause] Add a Termination clause" in result["version_diff"]

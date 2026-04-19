@@ -22,6 +22,7 @@ def test_risk_identification_escalates_acta_deviation_rules() -> None:
     result = RiskIdentificationAgent()(state)
 
     assert result["overall_risk_level"] is RiskLevel.RED
+    assert result["risk_score"] >= 55
     assert result["risk_findings"][0].risk_type == "unilateral_termination"
     assert result["risk_findings"][0].risk_level is RiskLevel.RED
     assert result["risk_findings"][0].engine == "rules"
@@ -77,6 +78,7 @@ def test_risk_identification_merges_llm_assessment_with_rule_baseline() -> None:
     finding = result["risk_findings"][0]
 
     assert result["overall_risk_level"] is RiskLevel.RED
+    assert result["risk_score"] >= 90
     assert finding.risk_level is RiskLevel.RED
     assert finding.risk_type == "publication_veto"
     assert finding.engine == "merged"
@@ -111,6 +113,7 @@ def test_risk_identification_marks_results_provisional_when_k2_fails() -> None:
     finding = result["risk_findings"][0]
 
     assert result["overall_risk_level"] is RiskLevel.YELLOW
+    assert 28 <= result["risk_score"] < 55
     assert finding.risk_type == "extended_payment_timeline"
     assert finding.engine == "rules"
     assert result["needs_human_review"] is True
@@ -141,5 +144,6 @@ def test_risk_identification_requires_k2_provider(monkeypatch) -> None:
     result = RiskIdentificationAgent()(state)
 
     assert result["needs_human_review"] is True
+    assert 28 <= result["risk_score"] < 55
     assert result["errors"] == ["Risk identification requires K2. Set K2_API_KEY to enable K2 analysis."]
     assert "K2 analysis is required" in result["summary"]

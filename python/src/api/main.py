@@ -53,6 +53,20 @@ class AssessmentPayload(BaseModel):
 
 class RedlinePayload(BaseModel):
     proposed_text: str
+    original_text: str = ""
+    suggested_text: str = ""
+    reason: str = ""
+    priority: str = "medium"
+
+
+class SuggestionPayload(BaseModel):
+    clause_id: str
+    clause_type: str
+    original_text: str = ""
+    suggested_text: str = ""
+    reason: str = ""
+    priority: str = "medium"
+    confidence: float
 
 
 class ClausePayload(BaseModel):
@@ -64,8 +78,11 @@ class ClausePayload(BaseModel):
 class AnalyzeResponse(BaseModel):
     summary: str
     clauses: list[ClausePayload]
+    suggestions: list[SuggestionPayload] = Field(default_factory=list)
     missing_clause_types: list[str] = Field(default_factory=list)
     extraction_model: str | None = None
+    version_diff: str = ""
+    risk_score: int = 0
 
 
 settings = get_settings()
@@ -188,7 +205,13 @@ def _normalize_response(result: ContractReviewState) -> AnalyzeResponse:
                     confidence=finding.confidence,
                 ),
                 redline=(
-                    RedlinePayload(proposed_text=redline.proposed_text)
+                    RedlinePayload(
+                        proposed_text=redline.proposed_text or redline.suggested_text,
+                        original_text=redline.original_text,
+                        suggested_text=redline.suggested_text or redline.proposed_text,
+                        reason=redline.reason or redline.rationale,
+                        priority=redline.priority,
+                    )
                     if redline is not None and finding.risk_level is not RiskLevel.GREEN
                     else None
                 ),
@@ -199,8 +222,22 @@ def _normalize_response(result: ContractReviewState) -> AnalyzeResponse:
     return AnalyzeResponse(
         summary=result.summary,
         clauses=clauses,
+        suggestions=[
+            SuggestionPayload(
+                clause_id=suggestion.clause_id,
+                clause_type=suggestion.clause_type.value,
+                original_text=suggestion.original_text,
+                suggested_text=suggestion.suggested_text or suggestion.proposed_text,
+                reason=suggestion.reason or suggestion.rationale,
+                priority=suggestion.priority,
+                confidence=suggestion.confidence,
+            )
+            for suggestion in result.suggestions
+        ],
         missing_clause_types=result.missing_clause_types,
         extraction_model=result.extraction_model,
+        version_diff=result.version_diff,
+        risk_score=result.risk_score,
     )
 
 
