@@ -18,7 +18,7 @@ ENV_FILE = ROOT_DIR / ".env"
 
 
 class Settings(BaseModel):
-    app_name: str = "Contract Review Backend"
+    app_name: str = "Contract Review Service"
     app_env: str = "development"
     upload_dir: Path = Field(default=ROOT_DIR.parent / "uploads")
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])

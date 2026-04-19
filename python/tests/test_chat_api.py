@@ -6,7 +6,7 @@ from src.api.main import ChatRequest, chat
 
 
 def test_chat_endpoint_returns_fallback_without_llm(monkeypatch) -> None:
-    monkeypatch.setattr("src.api.main.get_llm", lambda: None)
+    monkeypatch.setattr("src.services.chat.get_llm", lambda: None)
 
     response = asyncio.run(
         chat(
@@ -29,7 +29,7 @@ def test_chat_endpoint_returns_llm_response(monkeypatch) -> None:
             assert len(messages) == 2
             return FakeLLMResponse()
 
-    monkeypatch.setattr("src.api.main.get_llm", lambda: FakeLLM())
+    monkeypatch.setattr("src.services.chat.get_llm", lambda: FakeLLM())
 
     response = asyncio.run(
         chat(

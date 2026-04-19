@@ -1,1 +1,1 @@
-"""Python backend package for the contract review service."""
+"""Python service package for the contract review app."""

@@ -1,0 +1,42 @@
+{
+  "Confidentiality": {
+    "standard_text": "Confidential information must remain protected for five years, excluding information that is publicly known, independently developed, or rightfully received from a third party.",
+    "required_terms": ["five years", "publicly known", "independently developed"]
+  },
+  "Indemnification": {
+    "standard_text": "Indemnification should be mutual and negligence-based only. The sponsor indemnifies for product liability, and neither party gives blanket indemnification.",
+    "required_terms": ["mutual", "negligence", "product liability"]
+  },
+  "Payment Terms": {
+    "standard_text": "Invoices should be paid within net 30 days and tied to an itemized budget with agreed caps on indirect costs.",
+    "required_terms": ["net 30", "itemized budget", "invoice"]
+  },
+  "Intellectual Property": {
+    "standard_text": "The sponsor retains rights to the investigational compound, while the site retains rights to independently developed intellectual property.",
+    "required_terms": ["sponsor retains", "independently developed", "intellectual property"]
+  },
+  "Publication Rights": {
+    "standard_text": "The site receives a 60-day review period before publication, and any publication delay should be limited to patent filing needs.",
+    "required_terms": ["60-day", "publication", "patent"]
+  },
+  "Termination": {
+    "standard_text": "Termination rights should define notice requirements, patient safety protections, and post-termination obligations.",
+    "required_terms": ["notice", "patient safety", "termination"]
+  },
+  "Governing Law": {
+    "standard_text": "Governing law and venue should be commercially reasonable and should not create a one-sided litigation burden.",
+    "required_terms": ["governing law", "venue"]
+  },
+  "Subject Injury": {
+    "standard_text": "The sponsor covers research-related injury costs, except for harm caused solely by site negligence or standard-of-care obligations.",
+    "required_terms": ["research-related injury", "standard of care"]
+  },
+  "Protocol Deviations": {
+    "standard_text": "Protocol deviations must be reported to the sponsor within five business days.",
+    "required_terms": ["protocol deviation", "five business days", "reported"]
+  },
+  "General Clause": {
+    "standard_text": "Review this clause against the closest CTA baseline and escalate uncertainty.",
+    "required_terms": []
+  }
+}

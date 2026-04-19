@@ -1,70 +1,49 @@
 from __future__ import annotations
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
 from src.config import get_settings
 from src.pipeline.state import Clause, ClauseType, RiskFinding, RiskLevel, Suggestion
 
+RULESET_VERSION = "v1"
+RULESET_DIR = Path(__file__).with_name("data") / RULESET_VERSION
 
-PLAYBOOK: dict[ClauseType, dict[str, object]] = {
-    ClauseType.CONFIDENTIALITY: {
-        "standard_text": (
-            "Confidential information must remain protected for five years, excluding information "
-            "that is publicly known, independently developed, or rightfully received from a third party."
-        ),
-        "required_terms": ["five years", "publicly known", "independently developed"],
-    },
-    ClauseType.INDEMNIFICATION: {
-        "standard_text": (
-            "Indemnification should be mutual and negligence-based only. The sponsor indemnifies "
-            "for product liability, and neither party gives blanket indemnification."
-        ),
-        "required_terms": ["mutual", "negligence", "product liability"],
-    },
-    ClauseType.PAYMENT_TERMS: {
-        "standard_text": (
-            "Invoices should be paid within net 30 days and tied to an itemized budget with agreed caps on indirect costs."
-        ),
-        "required_terms": ["net 30", "itemized budget", "invoice"],
-    },
-    ClauseType.INTELLECTUAL_PROPERTY: {
-        "standard_text": (
-            "The sponsor retains rights to the investigational compound, while the site retains rights "
-            "to independently developed intellectual property."
-        ),
-        "required_terms": ["sponsor retains", "independently developed", "intellectual property"],
-    },
-    ClauseType.PUBLICATION_RIGHTS: {
-        "standard_text": (
-            "The site receives a 60-day review period before publication, and any publication delay should be limited to patent filing needs."
-        ),
-        "required_terms": ["60-day", "publication", "patent"],
-    },
-    ClauseType.TERMINATION: {
-        "standard_text": (
-            "Termination rights should define notice requirements, patient safety protections, and post-termination obligations."
-        ),
-        "required_terms": ["notice", "patient safety", "termination"],
-    },
-    ClauseType.GOVERNING_LAW: {
-        "standard_text": (
-            "Governing law and venue should be commercially reasonable and should not create a one-sided litigation burden."
-        ),
-        "required_terms": ["governing law", "venue"],
-    },
-    ClauseType.SUBJECT_INJURY: {
-        "standard_text": (
-            "The sponsor covers research-related injury costs, except for harm caused solely by site negligence or standard-of-care obligations."
-        ),
-        "required_terms": ["research-related injury", "standard of care"],
-    },
-    ClauseType.PROTOCOL_DEVIATIONS: {
-        "standard_text": "Protocol deviations must be reported to the sponsor within five business days.",
-        "required_terms": ["protocol deviation", "five business days", "reported"],
-    },
-    ClauseType.GENERAL: {
-        "standard_text": "Review this clause against the closest CTA baseline and escalate uncertainty.",
-        "required_terms": [],
-    },
-}
+@lru_cache(maxsize=1)
+def _load_playbook() -> dict[ClauseType, dict[str, object]]:
+    payload = json.loads((RULESET_DIR / "playbook.json").read_text(encoding="utf-8"))
+    return {
+        ClauseType(clause_type): {
+            "standard_text": str(item["standard_text"]),
+            "required_terms": [str(term) for term in item.get("required_terms", [])],
+        }
+        for clause_type, item in payload.items()
+    }
+
+
+@lru_cache(maxsize=1)
+def _load_risk_rules() -> dict[ClauseType, list[dict[str, object]]]:
+    payload = json.loads((RULESET_DIR / "risk_rules.json").read_text(encoding="utf-8"))
+    return {
+        ClauseType(clause_type): [
+            {
+                "name": str(item["name"]),
+                "patterns": [str(pattern) for pattern in item.get("patterns", [])],
+                "risk_level": RiskLevel(str(item["risk_level"])),
+                "summary": str(item["summary"]),
+                "buyer_impact": str(item["buyer_impact"]),
+                "seller_impact": str(item["seller_impact"]),
+                "action": str(item["action"]),
+            }
+            for item in rules
+        ]
+        for clause_type, rules in payload.items()
+    }
+
+
+PLAYBOOK = _load_playbook()
+ACTA_RISK_RULES = _load_risk_rules()
 
 CORE_CLAUSE_TYPES = [
     ClauseType.CONFIDENTIALITY,

@@ -1,0 +1,77 @@
+{
+  "Confidentiality": [
+    {
+      "name": "weak_confidentiality_protection",
+      "patterns": ["as it deems appropriate", "reasonable efforts only", "commercially reasonable efforts only"],
+      "risk_level": "yellow",
+      "summary": "The confidentiality protection may be weaker than the ACTA baseline.",
+      "buyer_impact": "The drafting party may have reduced recourse if confidential information is mishandled.",
+      "seller_impact": "The counterparty carries a lighter protection standard than ACTA typically expects.",
+      "action": "Use clearer confidentiality obligations and standard ACTA exceptions."
+    }
+  ],
+  "Indemnification": [
+    {
+      "name": "unlimited_liability",
+      "patterns": ["unlimited liability", "without limitation", "all losses", "any and all liability"],
+      "risk_level": "red",
+      "summary": "The clause creates exposure beyond the ACTA baseline's negligence-based allocation.",
+      "buyer_impact": "The drafting party may face uncapped indemnity or defense exposure.",
+      "seller_impact": "The counterparty can shift broad downstream liability without a matching cap or fault standard.",
+      "action": "Cap liability and restore mutual, negligence-based indemnification language."
+    },
+    {
+      "name": "one_way_indemnity",
+      "patterns": ["shall indemnify", "defend and hold harmless"],
+      "risk_level": "yellow",
+      "summary": "The clause appears one-sided compared with ACTA's mutual indemnity position.",
+      "buyer_impact": "The drafting party may absorb product or negligence risk without reciprocity.",
+      "seller_impact": "The counterparty receives broader protection than the ACTA baseline normally provides.",
+      "action": "Reframe indemnity as mutual and tie it to negligence or product liability."
+    }
+  ],
+  "Payment Terms": [
+    {
+      "name": "extended_payment_timeline",
+      "patterns": ["net 60", "net 90", "sixty days", "ninety days"],
+      "risk_level": "yellow",
+      "summary": "The payment timing is slower than ACTA's net-30 style baseline.",
+      "buyer_impact": "The drafting party may wait longer for reimbursement and carry performance costs.",
+      "seller_impact": "The counterparty preserves cash-flow leverage.",
+      "action": "Restore net-30 timing and tie payment to itemized invoicing."
+    }
+  ],
+  "Publication Rights": [
+    {
+      "name": "publication_veto",
+      "patterns": ["prior written consent", "may withhold publication", "approve any publication", "sole discretion"],
+      "risk_level": "red",
+      "summary": "The clause looks more restrictive than ACTA's limited review and patent-delay approach.",
+      "buyer_impact": "The drafting party may lose academic publication rights or timeline control.",
+      "seller_impact": "The counterparty gains a de facto veto over publication.",
+      "action": "Limit review rights to a short comment period and patent filing delay only."
+    }
+  ],
+  "Termination": [
+    {
+      "name": "unilateral_termination",
+      "patterns": ["terminate at any time", "sole discretion", "without cause", "immediately terminate"],
+      "risk_level": "red",
+      "summary": "The clause gives one party unilateral termination rights that exceed ACTA's balanced termination framework.",
+      "buyer_impact": "The drafting party may lose continuity, budget certainty, or patient safety protections.",
+      "seller_impact": "The counterparty can exit without reciprocal notice or transition duties.",
+      "action": "Add notice periods, patient protection steps, and post-termination obligations."
+    }
+  ],
+  "Governing Law": [
+    {
+      "name": "exclusive_venue",
+      "patterns": ["exclusive jurisdiction", "exclusive venue", "sole venue"],
+      "risk_level": "yellow",
+      "summary": "The clause can impose a one-sided litigation burden compared with the ACTA baseline.",
+      "buyer_impact": "The drafting party may have to litigate in an unfavorable or distant forum.",
+      "seller_impact": "The counterparty secures procedural leverage on venue.",
+      "action": "Negotiate a neutral venue or commercially reasonable governing-law compromise."
+    }
+  ]
+}

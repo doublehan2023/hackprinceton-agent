@@ -6,7 +6,7 @@ import re
 
 from src.config import get_llm, get_settings
 from src.pipeline.state import Clause, ClauseType, ContractReviewState, RiskFinding, RiskLevel
-from src.rules.engine import PLAYBOOK, evaluate_clause_risk
+from src.rules.engine import ACTA_RISK_RULES, PLAYBOOK, evaluate_clause_risk
 
 logger = logging.getLogger(__name__)
 
@@ -48,85 +48,6 @@ Rules:
 - Use red for strongly one-sided language, open-ended liability, weak publication/termination protections, or other material departures from the ACTA baseline.
 - Keep confidence between 0 and 1.
 """
-
-
-ACTA_RISK_RULES: dict[ClauseType, list[dict[str, object]]] = {
-    ClauseType.INDEMNIFICATION: [
-        {
-            "name": "unlimited_liability",
-            "patterns": [r"unlimited liability", r"without limitation", r"all losses", r"any and all liability"],
-            "risk_level": RiskLevel.RED,
-            "summary": "The clause creates exposure beyond the ACTA baseline's negligence-based allocation.",
-            "buyer_impact": "The drafting party may face uncapped indemnity or defense exposure.",
-            "seller_impact": "The counterparty can shift broad downstream liability without a matching cap or fault standard.",
-            "action": "Cap liability and restore mutual, negligence-based indemnification language.",
-        },
-        {
-            "name": "one_way_indemnity",
-            "patterns": [r"shall indemnify", r"defend and hold harmless"],
-            "risk_level": RiskLevel.YELLOW,
-            "summary": "The clause appears one-sided compared with ACTA's mutual indemnity position.",
-            "buyer_impact": "The drafting party may absorb product or negligence risk without reciprocity.",
-            "seller_impact": "The counterparty receives broader protection than the ACTA baseline normally provides.",
-            "action": "Reframe indemnity as mutual and tie it to negligence or product liability.",
-        },
-    ],
-    ClauseType.TERMINATION: [
-        {
-            "name": "unilateral_termination",
-            "patterns": [r"terminate at any time", r"sole discretion", r"without cause", r"immediately terminate"],
-            "risk_level": RiskLevel.RED,
-            "summary": "The clause gives one party unilateral termination rights that exceed ACTA's balanced termination framework.",
-            "buyer_impact": "The drafting party may lose continuity, budget certainty, or patient safety protections.",
-            "seller_impact": "The counterparty can exit without reciprocal notice or transition duties.",
-            "action": "Add notice periods, patient protection steps, and post-termination obligations.",
-        },
-    ],
-    ClauseType.PUBLICATION_RIGHTS: [
-        {
-            "name": "publication_veto",
-            "patterns": [r"prior written consent", r"may withhold publication", r"approve any publication", r"sole discretion"],
-            "risk_level": RiskLevel.RED,
-            "summary": "The clause looks more restrictive than ACTA's limited review and patent-delay approach.",
-            "buyer_impact": "The drafting party may lose academic publication rights or timeline control.",
-            "seller_impact": "The counterparty gains a de facto veto over publication.",
-            "action": "Limit review rights to a short comment period and patent filing delay only.",
-        },
-    ],
-    ClauseType.GOVERNING_LAW: [
-        {
-            "name": "exclusive_venue",
-            "patterns": [r"exclusive jurisdiction", r"exclusive venue", r"sole venue"],
-            "risk_level": RiskLevel.YELLOW,
-            "summary": "The clause can impose a one-sided litigation burden compared with the ACTA baseline.",
-            "buyer_impact": "The drafting party may have to litigate in an unfavorable or distant forum.",
-            "seller_impact": "The counterparty secures procedural leverage on venue.",
-            "action": "Negotiate a neutral venue or commercially reasonable governing-law compromise.",
-        },
-    ],
-    ClauseType.PAYMENT_TERMS: [
-        {
-            "name": "extended_payment_timeline",
-            "patterns": [r"net 60", r"net 90", r"sixty days", r"ninety days"],
-            "risk_level": RiskLevel.YELLOW,
-            "summary": "The payment timing is slower than ACTA's net-30 style baseline.",
-            "buyer_impact": "The drafting party may wait longer for reimbursement and carry performance costs.",
-            "seller_impact": "The counterparty preserves cash-flow leverage.",
-            "action": "Restore net-30 timing and tie payment to itemized invoicing.",
-        },
-    ],
-    ClauseType.CONFIDENTIALITY: [
-        {
-            "name": "weak_confidentiality_protection",
-            "patterns": [r"as it deems appropriate", r"reasonable efforts only", r"commercially reasonable efforts only"],
-            "risk_level": RiskLevel.YELLOW,
-            "summary": "The confidentiality protection may be weaker than the ACTA baseline.",
-            "buyer_impact": "The drafting party may have reduced recourse if confidential information is mishandled.",
-            "seller_impact": "The counterparty carries a lighter protection standard than ACTA typically expects.",
-            "action": "Use clearer confidentiality obligations and standard ACTA exceptions.",
-        },
-    ],
-}
 
 RISK_PRIORITY = {
     RiskLevel.RED: 3,
