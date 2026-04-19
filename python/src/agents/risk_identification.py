@@ -351,7 +351,7 @@ class RiskIdentificationAgent:
 
         severity_weights = {
             RiskLevel.RED: 1.0,
-            RiskLevel.YELLOW: 0.58,
+            RiskLevel.YELLOW: 0.50,
             RiskLevel.GREEN: 0.12,
         }
         weighted_total = sum(
