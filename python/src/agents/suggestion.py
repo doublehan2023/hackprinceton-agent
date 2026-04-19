@@ -15,7 +15,7 @@ class SuggestionAgent:
                 suggestions.append(suggestion)
 
         counts = Counter(finding.risk_level for finding in state.risk_findings)
-        summary = (
+        summary = state.risk_summary or (
             f"Reviewed {len(state.risk_findings)} clauses. "
             f"Detected {counts[RiskLevel.RED]} critical, {counts[RiskLevel.YELLOW]} minor, "
             f"and {counts[RiskLevel.GREEN]} aligned clauses."

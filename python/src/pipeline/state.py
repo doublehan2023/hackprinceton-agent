@@ -46,6 +46,11 @@ class RiskFinding(BaseModel):
     needs_human_review: bool = False
     matched_terms: list[str] = Field(default_factory=list)
     missing_terms: list[str] = Field(default_factory=list)
+    risk_type: str | None = None
+    rationale: str = ""
+    buyer_impact: str = ""
+    seller_impact: str = ""
+    engine: str = "rules"
 
 
 class ComplianceFinding(BaseModel):
@@ -82,3 +87,6 @@ class ContractReviewState(BaseModel):
     missing_clause_types: list[str] = Field(default_factory=list)
     needs_human_review: bool = False
     summary: str = ""
+    overall_risk_level: RiskLevel | None = None
+    risk_summary: str = ""
+    errors: list[str] = Field(default_factory=list)
