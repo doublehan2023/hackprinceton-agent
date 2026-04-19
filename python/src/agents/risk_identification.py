@@ -7,6 +7,7 @@ from src.config import get_settings
 from src.llm import build_messages, get_llm_client, parse_json_response, validate_llm_runtime
 from src.pipeline.state import Clause, ClauseType, ContractReviewState, RiskFinding, RiskLevel
 from src.rules.engine import ACTA_RISK_RULES, PLAYBOOK, evaluate_clause_risk
+from src.utils.coercion import coerce_confidence
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +226,7 @@ class RiskIdentificationAgent:
             level = self._coerce_risk_level(item.get("risk_level"))
             description = str(item.get("description", "")).strip() or "Clause reviewed against the ACTA baseline."
             action = str(item.get("suggested_action", "")).strip() or self._default_action(level, clause.clause_type)
-            confidence = self._coerce_confidence(item.get("confidence"), clause.classification_confidence)
+            confidence = coerce_confidence(item.get("confidence"), min(0.9, max(0.55, clause.classification_confidence)))
 
             findings.append(
                 RiskFinding(
@@ -270,13 +271,6 @@ class RiskIdentificationAgent:
         if normalized == RiskLevel.YELLOW.value:
             return RiskLevel.YELLOW
         return RiskLevel.GREEN
-
-    def _coerce_confidence(self, value: object, fallback: float) -> float:
-        try:
-            confidence = float(value)
-        except (TypeError, ValueError):
-            confidence = min(0.9, max(0.55, fallback))
-        return min(max(confidence, 0.0), 1.0)
 
     def _default_action(self, level: RiskLevel, clause_type: ClauseType) -> str:
         if level is RiskLevel.GREEN:

@@ -6,6 +6,7 @@ from src.config import get_settings
 from src.llm import build_messages, get_llm_client, parse_json_response
 from src.nlp.legal_nlp import extract_clauses
 from src.pipeline.state import Clause, ClauseType, ContractReviewState, Section
+from src.utils.coercion import coerce_clause_type, coerce_confidence
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +132,7 @@ class ClauseExtractionAgent:
                 continue
 
             raw_type = str(item.get("clause_type", ClauseType.GENERAL.value))
-            clause_type = self._coerce_clause_type(raw_type)
+            clause_type = coerce_clause_type(raw_type)
             section_order = self._coerce_int(item.get("section_order"))
             section_title = item.get("section_title")
             if section_title is not None:
@@ -143,7 +144,7 @@ class ClauseExtractionAgent:
             if not isinstance(evidence, list):
                 evidence = []
 
-            confidence = self._coerce_confidence(item.get("classification_confidence"))
+            confidence = coerce_confidence(item.get("classification_confidence"))
 
             clauses.append(
                 Clause(
@@ -160,32 +161,6 @@ class ClauseExtractionAgent:
 
         max_clauses = get_settings().analysis_max_clauses
         return clauses[:max_clauses]
-
-    def _coerce_clause_type(self, raw_value: str) -> ClauseType:
-        normalized = raw_value.strip().lower()
-        alias_map = {
-            "confidentiality": ClauseType.CONFIDENTIALITY,
-            "indemnification": ClauseType.INDEMNIFICATION,
-            "payment terms": ClauseType.PAYMENT_TERMS,
-            "payment": ClauseType.PAYMENT_TERMS,
-            "intellectual property": ClauseType.INTELLECTUAL_PROPERTY,
-            "publication rights": ClauseType.PUBLICATION_RIGHTS,
-            "publication": ClauseType.PUBLICATION_RIGHTS,
-            "termination": ClauseType.TERMINATION,
-            "governing law": ClauseType.GOVERNING_LAW,
-            "subject injury": ClauseType.SUBJECT_INJURY,
-            "protocol deviations": ClauseType.PROTOCOL_DEVIATIONS,
-            "general clause": ClauseType.GENERAL,
-            "general": ClauseType.GENERAL,
-        }
-        return alias_map.get(normalized, ClauseType.GENERAL)
-
-    def _coerce_confidence(self, value: object) -> float:
-        try:
-            confidence = float(value)
-        except (TypeError, ValueError):
-            return 0.5
-        return min(max(confidence, 0.0), 1.0)
 
     def _coerce_int(self, value: object) -> int | None:
         try:

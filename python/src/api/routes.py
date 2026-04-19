@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi import HTTPException
+
+from src.api.limiter import limiter
 
 from src.api.schemas import (
     ActaRewriteRequest,
@@ -61,7 +63,9 @@ async def upload_contract(file: UploadFile = File(...)) -> dict[str, str | int]:
 
 
 @router.post("/api/analyze", response_model=AnalyzeResponse)
+@limiter.limit("5/minute")
 async def analyze_contract(
+    request: Request,
     title: str = Form(...),
     text: str | None = Form(default=None),
     file: UploadFile | None = File(default=None),
