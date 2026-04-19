@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3.11 -c ' *)",
+      "Bash(lsof -ti:8000)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(python -m uvicorn backend.main:app --port 8000)",
+      "Bash(python3.11 -m uvicorn backend.main:app --port 8000)",
+      "Bash(curl -s http://127.0.0.1:8000/api/health)",
+      "Bash(git submodule *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)"
+    ]
+  }
+}

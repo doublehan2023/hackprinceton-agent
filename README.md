@@ -4,12 +4,12 @@ ACTA is an AI-powered contract review platform that automatically analyzes legal
 
 ## Features
 
-- Upload contracts in PDF, DOCX, or TXT format
-- Automated clause extraction and risk scoring
-- Compliance checking and improvement suggestions
-- Document redlining with proposed changes
-- Interactive chat Q&A about any uploaded contract
-- Contract rewriting to standardized ACTA format
+- Upload contracts in PDF, DOCX, or TXT format.
+- Automated clause extraction and risk scoring.
+- Compliance checking and improvement suggestions.
+- Document redlining with proposed changes.
+- Interactive chat Q&A about any uploaded contract.
+- Contract rewriting to standardized ACTA format.
 
 ## Prerequisites
 
